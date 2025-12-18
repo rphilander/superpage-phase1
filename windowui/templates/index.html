@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superpage</title>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f6f6ef;
+            color: #333;
+        }
+        h1 {
+            color: #ff6600;
+            margin-bottom: 20px;
+        }
+        .controls {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .control-row {
+            margin-bottom: 15px;
+        }
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .button-group button {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .button-group button:hover {
+            background: #f0f0f0;
+        }
+        .button-group button.active {
+            background: #ff6600;
+            color: #fff;
+            border-color: #ff6600;
+        }
+        .button-group button.in-range {
+            background: #ffe6d5;
+            border-color: #ffb380;
+        }
+        .button-group button.pending {
+            background: #ff6600;
+            color: #fff;
+            border-color: #ff6600;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+        .search-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-row button {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-row button:hover {
+            background: #f0f0f0;
+        }
+        select {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .stories {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .story {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .story-headline {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .story-headline a {
+            color: #333;
+            text-decoration: none;
+        }
+        .story-headline a:hover {
+            color: #ff6600;
+        }
+        .story-meta {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .story-meta a {
+            color: #666;
+            text-decoration: none;
+        }
+        .story-meta a:hover {
+            color: #ff6600;
+        }
+        .metric {
+            font-weight: 600;
+            color: #ff6600;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #c00;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Superpage</h1>
+
+    <div class="controls">
+        <div class="control-row">
+            <div class="button-group" id="time-buttons">
+                <button data-hours="0" class="active">Now</button>
+                <button data-hours="1">1h</button>
+                <button data-hours="2">2h</button>
+                <button data-hours="3">3h</button>
+                <button data-hours="5">5h</button>
+                <button data-hours="8">8h</button>
+                <button data-hours="13">13h</button>
+                <button data-hours="24" class="active">24h</button>
+                <button data-hours="48">2d</button>
+                <button data-hours="72">3d</button>
+                <button data-hours="120">5d</button>
+                <button data-hours="192">8d</button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="button-group" id="criteria-buttons">
+                <button data-criteria="best_rank">Best Rank</button>
+                <button data-criteria="max_points" class="active">Max Points</button>
+                <button data-criteria="max_comments">Max Comments</button>
+                <button data-criteria="incremental_comments">+ Comments</button>
+                <button data-criteria="incremental_points">+ Points</button>
+                <select id="limit-select">
+                    <option value="30" selected>30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="search-row">
+                <input type="text" id="search-input" placeholder="Filter headlines...">
+                <button id="clear-search">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stories-container" class="stories">
+        <div class="loading">Loading stories...</div>
+    </div>
+
+    <script>
+        let allStories = [];
+        let fuse = null;
+
+        const state = {
+            startHours: 24,
+            endHours: 0,
+            criteria: 'max_points',
+            limit: 30
+        };
+
+        function initFuse(stories) {
+            fuse = new Fuse(stories, {
+                keys: ['headline'],
+                threshold: 0.4,
+                ignoreLocation: true
+            });
+        }
+
+        function getMetricLabel(criteria) {
+            const labels = {
+                'best_rank': 'rank',
+                'max_points': 'points',
+                'max_comments': 'comments',
+                'incremental_comments': 'new comments',
+                'incremental_points': 'new points'
+            };
+            return labels[criteria] || criteria;
+        }
+
+        function renderStories(stories) {
+            const container = document.getElementById('stories-container');
+
+            if (!stories || stories.length === 0) {
+                container.innerHTML = '<div class="no-results">No stories found</div>';
+                return;
+            }
+
+            const metricLabel = getMetricLabel(state.criteria);
+
+            container.innerHTML = stories.map(story => `
+                <div class="story">
+                    <div class="story-headline">
+                        <a href="${story.url}" target="_blank" rel="noopener">${escapeHtml(story.headline)}</a>
+                    </div>
+                    <div class="story-meta">
+                        <span class="${state.criteria === 'max_points' ? 'metric' : ''}">${story.max_points} points${state.criteria === 'incremental_points' ? ' <span class="metric">(+' + story.incremental_points + ')</span>' : ''}</span>
+                        <a href="${story.discussion_url}" target="_blank" rel="noopener" class="${state.criteria === 'max_comments' ? 'metric' : ''}">${story.max_comments} comments${state.criteria === 'incremental_comments' ? ' <span class="metric">(+' + story.incremental_comments + ')</span>' : ''}</a>
+                        <span>by ${escapeHtml(story.username)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function filterStories() {
+            const query = document.getElementById('search-input').value.trim();
+
+            if (!query) {
+                renderStories(allStories);
+                return;
+            }
+
+            if (fuse) {
+                const results = fuse.search(query);
+                renderStories(results.map(r => r.item));
+            }
+        }
+
+        async function fetchStories() {
+            const container = document.getElementById('stories-container');
+            container.innerHTML = '<div class="loading">Loading stories...</div>';
+
+            const now = Math.floor(Date.now() / 1000);
+            const from = now - (state.startHours * 3600);
+            const to = now - (state.endHours * 3600);
+
+            try {
+                const params = new URLSearchParams({
+                    from: from,
+                    to: to,
+                    criteria: state.criteria,
+                    limit: state.limit
+                });
+
+                const response = await fetch(`/api/stories?${params}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch stories');
+                }
+
+                const data = await response.json();
+                allStories = data.stories || [];
+                initFuse(allStories);
+                filterStories();
+            } catch (error) {
+                container.innerHTML = `<div class="error">Error: ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        let pendingHours = null;
+        let pendingTimer = null;
+
+        function updateTimeButtons() {
+            const container = document.getElementById('time-buttons');
+            const buttons = container.querySelectorAll('button');
+
+            buttons.forEach(btn => {
+                const hours = parseInt(btn.dataset.hours);
+                btn.classList.remove('active', 'in-range', 'pending');
+
+                if (hours === pendingHours) {
+                    btn.classList.add('pending');
+                } else if (hours === state.startHours || hours === state.endHours) {
+                    btn.classList.add('active');
+                } else if (hours > state.endHours && hours < state.startHours) {
+                    btn.classList.add('in-range');
+                }
+            });
+        }
+
+        function cancelPending() {
+            if (pendingTimer) {
+                clearTimeout(pendingTimer);
+                pendingTimer = null;
+            }
+            pendingHours = null;
+            updateTimeButtons();
+        }
+
+        function setupTimeButtons() {
+            const container = document.getElementById('time-buttons');
+            const buttons = container.querySelectorAll('button');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const hours = parseInt(btn.dataset.hours);
+
+                    // If no pending selection, this is the first click
+                    if (pendingHours === null) {
+                        pendingHours = hours;
+                        updateTimeButtons();
+
+                        // Start 5 second timer
+                        pendingTimer = setTimeout(() => {
+                            cancelPending();
+                        }, 5000);
+                        return;
+                    }
+
+                    // If clicking same button as pending, cancel
+                    if (hours === pendingHours) {
+                        cancelPending();
+                        return;
+                    }
+
+                    // This is the second click - set the range
+                    clearTimeout(pendingTimer);
+                    pendingTimer = null;
+
+                    const firstHours = pendingHours;
+                    const secondHours = hours;
+                    pendingHours = null;
+
+                    // Larger value is start (further back in time), smaller is end (closer to now)
+                    state.startHours = Math.max(firstHours, secondHours);
+                    state.endHours = Math.min(firstHours, secondHours);
+
+                    updateTimeButtons();
+                    fetchStories();
+                });
+            });
+
+            updateTimeButtons();
+        }
+
+        function setupCriteriaButtons() {
+            const container = document.getElementById('criteria-buttons');
+            const buttons = container.querySelectorAll('button');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.criteria = btn.dataset.criteria;
+                    fetchStories();
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTimeButtons();
+            setupCriteriaButtons();
+
+            document.getElementById('limit-select').addEventListener('change', (e) => {
+                state.limit = parseInt(e.target.value);
+                fetchStories();
+            });
+
+            document.getElementById('search-input').addEventListener('input', filterStories);
+
+            document.getElementById('clear-search').addEventListener('click', () => {
+                document.getElementById('search-input').value = '';
+                filterStories();
+            });
+
+            fetchStories();
+        });
+    </script>
+</body>
+</html>

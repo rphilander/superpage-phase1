@@ -3,6 +3,12 @@ ratelimiter/ratelimiter
 parser/parser
 querier/querier
 webui/webui
+snapshotdb/snapshotdb
+windowui/windowui
+windowviewer/windowviewer
+
+# Database files
+*.db
 
 # OS
 .DS_Store
